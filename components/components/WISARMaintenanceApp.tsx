@@ -1,15 +1,15 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Calendar, CheckCircle, AlertTriangle, Truck, Ambulance, Ship, Wrench, Users, FileText, TrendingUp } from 'lucide-react'
+import { Calendar, CheckCircle, AlertTriangle, Truck, Ship, Wrench, Users, FileText, TrendingUp, Cross } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 const vehicles = [
   { id: 'pump-truck', name: 'Large Pump Truck - BIG RED', type: 'fire', icon: Truck, status: 'operational', hasPump: true, lastTest: '2025-07-25' },
   { id: 'kubota-fire', name: 'Kubota Fire Truck', type: 'fire', icon: Truck, status: 'operational', hasPump: true, lastTest: '2025-07-25' },
   { id: 'gator-fire', name: 'Gator Fire Truck', type: 'fire', icon: Truck, status: 'operational', hasPump: true, lastTest: '2025-07-25' },
-  { id: 'ambulance-2018', name: '2018 Kubota Ambulance', type: 'ems', icon: Ambulance, status: 'operational', hasPump: false, lastTest: '2025-07-25' },
-  { id: 'ambulance-new', name: 'New Ambulance (2024)', type: 'ems', icon: Ambulance, status: 'operational', hasPump: false, lastTest: '2025-07-25' },
+  { id: 'ambulance-2018', name: '2018 Kubota Cross', type: 'ems', icon: Cross, status: 'operational', hasPump: false, lastTest: '2025-07-25' },
+  { id: 'ambulance-new', name: 'New Cross (2024)', type: 'ems', icon: Cross, status: 'operational', hasPump: false, lastTest: '2025-07-25' },
   { id: 'boat-rescue', name: 'Rescue Boat', type: 'marine', icon: Ship, status: 'operational', hasPump: false, lastTest: '2025-07-25' },
   { id: 'utv-rescue', name: 'UTV Rescue', type: 'rescue', icon: Truck, status: 'operational', hasPump: false, lastTest: '2025-07-25' },
 ]
