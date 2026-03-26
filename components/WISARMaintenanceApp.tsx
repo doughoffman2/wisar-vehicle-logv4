@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Calendar, CheckCircle, AlertTriangle, Truck, Ship, Wrench, Users, FileText, Cross } from 'lucide-react'
+import { CheckCircle, AlertTriangle, Truck, Ship, Wrench, Users, FileText, Cross } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 const vehicles = [
@@ -126,15 +126,20 @@ export default function WISARMaintenanceApp() {
     if (!error) { setDrivers(prev => [...prev, newDriverName.trim()]); setNewDriverName('') }
   }
 
-  function getDaysOverdue(lastTest: string) {
-    const diffTime = new Date().getTime() - new Date(lastTest).getTime()
+  function getDaysOverdue(lastDate: string) {
+    const diffTime = new Date().getTime() - new Date(lastDate).getTime()
     return Math.floor(diffTime / (1000 * 60 * 60 * 24))
   }
 
-  function getLastPumpTest(vehicleId: string, fallback: string) {
-    const pumpTests = maintenanceLogs.filter(l => l.vehicle_id === vehicleId && l.type === 'pump-test')
-    if (pumpTests.length === 0) return fallback
-    return pumpTests.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date
+  function getLastActivity(vehicleId: string, fallback: string) {
+    const pumpTests = maintenanceLogs
+      .filter(l => l.vehicle_id === vehicleId && l.type === 'pump-test')
+      .map(l => l.date)
+    const inspections = inspectionLogs
+      .filter(l => l.vehicle_id === vehicleId)
+      .map(l => l.date)
+    const allDates = [...pumpTests, ...inspections, fallback]
+    return allDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0]
   }
 
   const selectedVehicleData = vehicles.find(v => v.id === selectedVehicle)!
@@ -177,10 +182,11 @@ export default function WISARMaintenanceApp() {
             <div className="grid gap-3">
               {vehicles.map(vehicle => {
                 const VehicleIcon = vehicle.icon
-                const lastTest = getLastPumpTest(vehicle.id, vehicle.lastTest)
-                const daysOverdue = getDaysOverdue(lastTest)
+                const lastActivity = getLastActivity(vehicle.id, vehicle.lastTest)
+                const daysSince = getDaysOverdue(lastActivity)
+                const isOverdue = daysSince > 180
+                const daysOverdueCount = daysSince - 180
                 const logs = maintenanceLogs.filter(l => l.vehicle_id === vehicle.id)
-                const inspections = inspectionLogs.filter(l => l.vehicle_id === vehicle.id)
                 return (
                   <div key={vehicle.id} className="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition"
                     onClick={() => { setSelectedVehicle(vehicle.id); setDashboardView('maintenance') }}>
@@ -190,10 +196,13 @@ export default function WISARMaintenanceApp() {
                         <span className="font-semibold">{vehicle.name}</span>
                       </div>
                       <div className="text-right">
-                        {daysOverdue > 180 ? (
-                          <span className="text-red-600 font-bold flex items-center gap-1">
-                            <AlertTriangle className="h-4 w-4" />{daysOverdue}d OVERDUE
-                          </span>
+                        {isOverdue ? (
+                          <div>
+                            <span className="text-red-600 font-bold flex items-center gap-1 justify-end">
+                              <AlertTriangle className="h-4 w-4" />OVERDUE
+                            </span>
+                            <div className="text-xs text-red-500">{daysOverdueCount}d past due</div>
+                          </div>
                         ) : (
                           <span className="text-green-600 font-bold flex items-center gap-1">
                             <CheckCircle className="h-4 w-4" />OK
@@ -203,9 +212,8 @@ export default function WISARMaintenanceApp() {
                       </div>
                     </div>
                     <div className="mt-2 text-sm text-gray-500">
-                      <span>Last Test: {lastTest}</span>
+                      <span>Last Activity: {lastActivity}</span>
                       <span className="ml-4">{logs.length} maintenance records</span>
-                      <span className="ml-4">{inspections.length} inspections</span>
                     </div>
                   </div>
                 )
@@ -230,7 +238,6 @@ export default function WISARMaintenanceApp() {
                 <select value={maintenanceForm.type} onChange={e => setMaintenanceForm(p => ({...p, type: e.target.value}))} className="border rounded p-2">
                   <option value="routine">Routine Service</option>
                   <option value="repair">Repair</option>
-                  <option value="inspection">Inspection</option>
                   <option value="pump-test">Pump Test</option>
                   <option value="oil">Oil Change</option>
                   <option value="tire">Tire Service</option>
